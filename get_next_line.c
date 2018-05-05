@@ -12,54 +12,57 @@
 
 #include "libft.h"
 #include "get_next_line.h"
-#include "fcntl.h"
 
-int		qnt_end(char buff[BUFF_SIZE], size_t size)
-{
-	int		qnt;
-	size_t	i;
-
-	i = 0;
-	qnt = 0;
-	while (i < size)
-		if (buff[i++] == '\n')
-			qnt++;
-	return (qnt);
-}
+#include <stdio.h>
 
 int		get_next_line(int fd, char **line)
 {
-	int			i;
-	int			j;
-	int			rd;
-	char		*str;
-	static char	buff[BUFF_SIZE + 1];
+	char			*buff;
+	char			*str;
+	static t_list	*lst;
+	t_list			*lst_line;
 
-	i = 0;
-	j = 0;
-	if (line && *line)
-		ft_bzero((void *)*line, ft_strlen(*line));
-	if (!buff[0])
-	{
-		if ((rd = read(fd, buff, BUFF_SIZE)) == -1)
-			return (-1);
-		buff[BUFF_SIZE] = '\0';
-	}
-	while (!qnt_end(buff, BUFF_SIZE))
-	{
-		if (!line || !*line)
-			*line = ft_strdup((char *)buff);
-		else
-			*line = ft_strjoin(*line, (char *)buff);
-		if ((rd = read(fd, buff, BUFF_SIZE)) == -1)
-			return (-1);
-		buff[BUFF_SIZE] = '\0';
-	}
-	printf("%s\n", buff);
-	if (rd == 0)
-		return (0);
-	else if (rd == 1)
-		return (1);
-	else
+	buff = (char *)malloc(sizeof(char) * (BUFF_SIZE + 1));
+	if (fd < 0 || !buff || read(fd, buff, 0) == -1)
 		return (-1);
+	if (!lst)
+	{
+		str = ft_strdup("");
+		lst = ft_lstnew(str, 1);
+		ft_strdel(&str);
+		lst_line = lst;
+	}
+	else
+	{
+		if (!lst_line->next)
+		{
+			str = ft_strdup("");
+			lst_line->next = ft_lstnew(str, 1);
+			ft_strdel(&str);
+		}
+		else
+			lst_line = lst_line->next;
+	}
+	while (!ft_strchr((char *)lst_line->content, '\n'))
+	{
+		ft_bzero(buff, BUFF_SIZE + 1);
+		read(fd, buff, BUFF_SIZE);
+		if (buff[0] == '\0' && !((char*)lst_line->content)[0])
+			return (0);
+		if (buff[0] == '\0')
+		{
+			*line = ft_strjoin((char *)lst_line->content, buff);
+			lst_line->content = "";
+			return (1);
+		}
+		str = (char *)lst_line->content;
+		lst_line->content = ft_strjoin((char *)lst_line->content, buff);
+		ft_strdel(&str);
+	}
+	*line = ft_strsub((char *)lst_line->content, 0, ft_strchr((char *)lst_line->content, '\n') - (char *)lst_line->content);
+	str = (char *)lst_line->content;
+	lst_line->content = ft_strsub((char *)lst_line->content, ft_strchr((char *)lst_line->content, '\n') - (char *)lst_line->content + 1, ft_strlen((char *)lst_line->content) - (ft_strchr((char *)lst_line->content, '\n') - (char *)lst_line->content) - 1);
+	ft_strdel(&str);
+	ft_strdel(&buff);
+	return (1);
 }

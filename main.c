@@ -33,7 +33,8 @@ int		main(int argc, char **argv)
 			while ((cd = get_next_line(fd, &line)) > 0)
 				printf("Here's a line: %s and cd: %i\n", line, cd);
 	//			printf(":)\n");
-			printf("Here's a line: %s and cd: %i\n", line, cd);
+	//		printf("Here's a line: %s and cd: %i\n", line, cd);
 		}
+//	system("leaks a.out");
 	return (0);
 }
