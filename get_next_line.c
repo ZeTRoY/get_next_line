@@ -5,78 +5,103 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: aroi <marvin@42.fr>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2018/04/17 16:47:45 by aroi              #+#    #+#             */
-/*   Updated: 2018/05/05 20:24:43 by aroi             ###   ########.fr       */
+/*   Created: 2018/05/06 12:08:18 by aroi              #+#    #+#             */
+/*   Updated: 2018/05/06 14:14:03 by aroi             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 #include "get_next_line.h"
 
-static t_list	*ft_add_elem(int fd, t_list **list)
+static t_line	*ft_newlist(char *str, int fd)
+{
+	t_line *list;
+
+	list = (t_line *)malloc(sizeof(t_line));
+	if (!list)
+		return (0);
+	list->content = (char *)malloc(sizeof(char) * (ft_strlen(str) + 1));
+	if (!list->content)
+	{
+		free(list);
+		return (0);
+	}
+	list->fd = fd;
+	ft_strcpy(list->content, str);
+	list->next = 0;
+	return (list);
+}
+
+static t_line	*ft_add_and_find_elem(int fd, t_line **list)
 {
 	char	*str;
-	t_list	*tmp;
+	t_line	*tmp;
 
-	if (!list || !*list)
+	if (!*list)
 	{
 		str = ft_strdup("");
-		*list = ft_lstnew(str, 1);
+		*list = ft_newlist(str, fd);
 		ft_strdel(&str);
 		return (*list);
 	}
 	tmp = *list;
-	if (!tmp->next)
+	while (tmp->next)
 	{
-		str = ft_strdup("");
-		tmp->next = ft_lstnew(str, 1);
-		ft_strdel(&str);
+		if (tmp->fd == fd)
+			return (tmp);
+		tmp = tmp->next;
 	}
-	else
-		while (tmp->next)
-			tmp = tmp->next;
-	return (tmp);
+	if (tmp->fd == fd)
+		return (tmp);
+	str = ft_strdup("");
+	tmp->next = ft_newlist(str, fd);
+	ft_strdel(&str);
+	return (tmp->next);
 }
 
-static int		ft_read_until_end(char **line, char **buff, t_list **list_buff)
+static int		ft_read_until_end(int res, char **line,
+		char **buff, t_line **tmp_list)
 {
 	char	*str;
-	t_list	*tmp;
+	t_line	*tmp;
 
-	tmp = *list_buff;
-	if ((*buff)[0] == '\0' && ((char *)tmp->content)[0] == '\0')
+	tmp = *tmp_list;
+	if (res == 0 && !ft_strcmp(tmp->content, ""))
 	{
 		ft_strdel(buff);
 		return (0);
 	}
-	ft_strdel(line);
-	*line = ft_strjoin(tmp->content, *buff);
-	str = ft_strdup("");
-	tmp->next = ft_lstnew(str, 1);
+	else if (res == 0)
+	{
+		*line = ft_strjoin(tmp->content, *buff);
+		tmp->content = "";
+		ft_strdel(buff);
+		return (1);
+	}
+	str = tmp->content;
+	tmp->content = ft_strjoin(tmp->content, *buff);
 	ft_strdel(&str);
-	ft_strdel(buff);
-	return (1);
+	return (-1);
 }
 
-static void		ft_del_and_add_line(char **line, char **buff, char **lst_cont)
+static void		ft_del_and_add_line(char **line, char **buff, char **cont)
 {
 	char *str;
 
-	ft_strdel(line);
-	*line = ft_strsub(*lst_cont, 0, ft_strchr(*lst_cont, '\n') - *lst_cont);
-	str = *lst_cont;
-	*lst_cont = ft_strsub(*lst_cont, ft_strchr(*lst_cont, '\n') - *lst_cont + 1,
-		ft_strlen(*lst_cont) - (ft_strchr(*lst_cont, '\n') - *lst_cont) - 1);
+	*line = ft_strsub(*cont, 0, ft_strchr(*cont, '\n') - *cont);
+	str = *cont;
+	*cont = ft_strsub(*cont, ft_strchr(*cont, '\n') - *cont + 1,
+			ft_strlen(*cont) - (ft_strchr(*cont, '\n') - *cont) - 1);
 	ft_strdel(&str);
 	ft_strdel(buff);
 }
 
 int				get_next_line(int fd, char **line)
 {
+	int				res;
 	char			*buff;
-	char			*str;
-	static t_list	*list;
-	t_list			*list_buff;
+	static t_line	*list;
+	t_line			*tmp;
 
 	buff = (char *)malloc(BUFF_SIZE + 1);
 	if (fd < 0 || !buff || read(fd, buff, 0) == -1)
@@ -84,17 +109,14 @@ int				get_next_line(int fd, char **line)
 		ft_strdel(&buff);
 		return (-1);
 	}
-	list_buff = ft_add_elem(fd, &list);
-	while (!ft_strchr(list_buff->content, '\n'))
+	tmp = ft_add_and_find_elem(fd, &list);
+	while (!ft_strchr(tmp->content, '\n'))
 	{
 		ft_bzero(buff, BUFF_SIZE + 1);
-		read(fd, buff, BUFF_SIZE);
-		if (buff[0] == '\0')
-			return (ft_read_until_end(line, &buff, &list_buff));
-		str = list_buff->content;
-		list_buff->content = ft_strjoin(list_buff->content, buff);
-		ft_strdel(&str);
+		res = read(fd, buff, BUFF_SIZE);
+		if ((res = ft_read_until_end(res, line, &buff, &tmp)) >= 0)
+			return (res);
 	}
-	ft_del_and_add_line(line, &buff, (char **)&list_buff->content);
+	ft_del_and_add_line(line, &buff, (char **)&tmp->content);
 	return (1);
 }
