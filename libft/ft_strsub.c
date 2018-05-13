@@ -12,7 +12,7 @@
 
 #include "libft.h"
 
-char static	*alloc_good(char const *s, unsigned int start, size_t len)
+static char	*alloc_good(char const *s, unsigned int start, size_t len)
 {
 	unsigned int	i;
 	char			*str;
@@ -33,7 +33,7 @@ char static	*alloc_good(char const *s, unsigned int start, size_t len)
 	return (str);
 }
 
-char static	*alloc_bad(char const *s, unsigned int start)
+static char	*alloc_bad(char const *s, unsigned int start)
 {
 	unsigned int	i;
 	char			*str;
@@ -56,9 +56,6 @@ char static	*alloc_bad(char const *s, unsigned int start)
 
 char		*ft_strsub(char const *s, unsigned int start, size_t len)
 {
-	unsigned int	i;
-
-	i = 0;
 	if (s && (int)start >= 0 && (int)len >= 0 &&
 			(int)ft_strlen(s) - (int)start >= 0)
 	{
