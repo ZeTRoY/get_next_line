@@ -6,7 +6,7 @@
 /*   By: aroi <marvin@42.fr>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/05/06 12:08:18 by aroi              #+#    #+#             */
-/*   Updated: 2018/05/06 14:14:03 by aroi             ###   ########.fr       */
+/*   Updated: 2018/05/13 21:41:54 by aroi             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,7 @@ static int		ft_read_until_end(int res, char **line,
 	else if (res == 0)
 	{
 		*line = ft_strjoin(tmp->content, *buff);
+		free(tmp->content);
 		tmp->content = "";
 		ft_strdel(buff);
 		return (1);
@@ -104,7 +105,7 @@ int				get_next_line(int fd, char **line)
 	t_line			*tmp;
 
 	buff = (char *)malloc(BUFF_SIZE + 1);
-	if (fd < 0 || !buff || read(fd, buff, 0) == -1)
+	if (fd < 0 || !buff || BUFF_SIZE < 0 || read(fd, buff, 0) == -1)
 	{
 		ft_strdel(&buff);
 		return (-1);
